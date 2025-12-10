@@ -10,7 +10,10 @@ import {
 import Editor, { OnMount } from "@monaco-editor/react";
 import monaco from "monaco-editor";
 import { useRef } from "react";
-import SideBar from "./sidebar/sidebar";
+import SideBar from "./sidebar";
+
+
+
 
 export default function CodeEditor() {
   const editorRef = useRef<null | monaco.editor.IStandaloneCodeEditor>(null);
@@ -33,7 +36,7 @@ export default function CodeEditor() {
               size={"sm"}
               className="min-w-20 justify-between"
             >
-              index.html
+              index.tsx
               <X className="w-3 h-3" />
             </Button>
             <Button
