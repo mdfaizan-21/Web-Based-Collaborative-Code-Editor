@@ -25,17 +25,17 @@ const GitHubIcon = () => (
 import { signIn } from "@/auth";
 
 // Server Action: Handles signing in with Google
-async function handleGoogleSignIn(){
-  "use server"
+async function handleGoogleSignIn() {
+  "use server";
   // This triggers the NextAuth signIn flow for the Google provider
-  await signIn("google")
+  await signIn("google");
 }
 
 // Server Action: Handles signing in with GitHub
-async function handleGithubSignIn(){
-  "use server"
+async function handleGithubSignIn() {
+  "use server";
   // This triggers the NextAuth signIn flow for the GitHub provider
-  await signIn("github")
+  await signIn("github");
 }
 
 const SignInFormClient = () => {
@@ -52,13 +52,13 @@ const SignInFormClient = () => {
 
       <CardContent className="grid gap-4">
         <form action={handleGoogleSignIn}>
-          <Button type="submit" variant={"outline"} className="w-full">
+          <Button type="submit" variant={"outline"} className="w-full cursor-pointer">
             <GoogleIcon />
             <span>Sign in with google</span>
           </Button>
         </form>
         <form action={handleGithubSignIn}>
-          <Button type="submit" variant={"outline"} className="w-full">
+          <Button type="submit" variant={"outline"} className="w-full cursor-pointer">
             <GitHubIcon />
             <span>Sign in with github</span>
           </Button>
