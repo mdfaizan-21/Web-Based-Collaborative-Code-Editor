@@ -15,13 +15,12 @@ import LogoutButton from "./logout-button";
 import { useCurrentUser } from "../hooks/use-current-user";
 
 const UserButton = () => {
-
-  const user = useCurrentUser()
+  const user = useCurrentUser();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <div className={cn("relative rounded-full")}>
+        <div className={cn("relative rounded-full cursor-pointer")}>
           <Avatar>
             <AvatarImage src={user?.image!} alt={user?.name!} />
             <AvatarFallback className="bg-red-500">
@@ -31,21 +30,18 @@ const UserButton = () => {
         </div>
       </DropdownMenuTrigger>
 
-    <DropdownMenuContent className="mr-4">
-      <DropdownMenuItem>
-        <span>
-          {user?.email}
-        </span>
-      </DropdownMenuItem>
-      <DropdownMenuSeparator/>
+      <DropdownMenuContent className="mr-4 w-full">
+        <DropdownMenuItem>
+          <span>{user?.email}</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <LogoutButton>
-            <DropdownMenuItem>
-                <LogOut className="h-4 w-4 mr-2"/>
-                LogOut
-            </DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer">
+            <LogOut className="h-4 w-4 mr-2" />
+            LogOut
+          </DropdownMenuItem>
         </LogoutButton>
-    </DropdownMenuContent>
-
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };
