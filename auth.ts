@@ -5,10 +5,13 @@ import authConfig from "./auth.config";
 import { db } from "./lib/db";
 import { getAccountByUserId, getUserById } from "@/features/auth/actions";
 
+// Initialize NextAuth with our configuration and database adapter
 export const { auth, handlers, signIn, signOut } = NextAuth({
   callbacks: {
     /**
-     * Handle user creation and account linking after a successful sign-in
+     * The signIn callback is triggered whenever a user tries to log in.
+     * We use it here to handle user creation and linking OAuth accounts (like Google/GitHub) 
+     * to our database manually.
      */
     async signIn({ user, account, profile }) {
       if (!user || !account) return false;
@@ -80,6 +83,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return true;
     },
 
+    /**
+     * The jwt callback is called whenever a JSON Web Token is created or updated.
+     * We use it to attach additional user information (like name, email, role) to the token.
+     */
     async jwt({ token, user, account }) {
       if (!token.sub) return token;
       const existingUser = await getUserById(token.sub);
@@ -95,8 +102,12 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return token;
     },
 
+    /**
+     * The session callback is called whenever a session is checked.
+     * We use it to pass data from the JWT token to the client-side session object.
+     */
     async session({ session, token }) {
-      // Attach the user ID from the token to the session
+      // Attach the user ID from the token to the session object
       if (token.sub && session.user) {
         session.user.id = token.sub;
       }
@@ -109,8 +120,12 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     },
   },
 
+  // Secret used to encrypt cookies and tokens
   secret: process.env.AUTH_SECRET,
+  // Use Prisma to store users and accounts in our database
   adapter: PrismaAdapter(db),
+  // Force JWT strategy for sessions, which works better with middleware
   session: { strategy: "jwt" },
+  // Spread in the providers configured in auth.config.ts
   ...authConfig,
 });

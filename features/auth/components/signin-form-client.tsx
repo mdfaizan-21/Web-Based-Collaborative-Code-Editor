@@ -24,14 +24,18 @@ const GitHubIcon = () => (
 );
 import { signIn } from "@/auth";
 
+// Server Action: Handles signing in with Google
 async function handleGoogleSignIn(){
-"use server"
-await signIn("google")
+  "use server"
+  // This triggers the NextAuth signIn flow for the Google provider
+  await signIn("google")
 }
 
+// Server Action: Handles signing in with GitHub
 async function handleGithubSignIn(){
-"use server"
-await signIn("github")
+  "use server"
+  // This triggers the NextAuth signIn flow for the GitHub provider
+  await signIn("github")
 }
 
 const SignInFormClient = () => {
