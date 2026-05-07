@@ -45,3 +45,6 @@ next-env.d.ts
 #intellicode
 .vscode
 /.idea
+
+#starter code
+/vibecode-starters
