@@ -157,7 +157,11 @@ const TemplateNode = ({
     return (
       <SidebarMenuItem>
         <div className="flex items-center group">
-          <SidebarMenuButton className="flex-1">
+          <SidebarMenuButton
+            isActive={isSelected}
+            onClick={() => onFileSelect?.(file)}
+            className="flex-1 cursor-pointer h-7"
+          >
             <File className="h-4 w-4 mr-2 shrink-0" />
             <span>{fileName}</span>
           </SidebarMenuButton>
@@ -253,7 +257,7 @@ const TemplateNode = ({
         >
           <div className="flex items-center group">
             <CollapsibleTrigger asChild>
-              <SidebarMenuButton className="flex-1">
+              <SidebarMenuButton className="flex-1 cursor-pointer">
                 <ChevronRight className="transition-transform" />
                 <Folder className="h-4 w-4 mr-2 shrink-0" />
                 <span>{folderName}</span>
