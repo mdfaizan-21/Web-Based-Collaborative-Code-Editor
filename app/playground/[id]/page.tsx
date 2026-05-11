@@ -50,11 +50,17 @@ import {
 import { TemplateFile } from "@/features/playground/types";
 import PlaygroundEditor from "@/features/playground/components/playground-editor";
 
+// Main layout component for the code playground page
 const Page = () => {
+  // Get the playground ID from the URL parameters
   const { id } = useParams<{ id: string }>();
+  // State to toggle the preview panel visibility
   const [isPreviewVisible, setIsPreviewVisible] = useState(true);
+
+  // Custom hook to fetch and manage the playground and template data from the server
   const { playgroundData, templateData, isLoading, error, saveTemplateData } =
     usePlayground(id);
+  // Custom Zustand hook to manage local file explorer state (e.g., which files are open)
   const {
     activeFileId,
     closeAllFiles,
@@ -75,19 +81,24 @@ const Page = () => {
     setOpenFiles,
   } = useFileExplorer();
 
+  // Set the playground ID in our local state whenever the URL parameter changes
   useEffect(() => {
     setPlaygroundId(id);
   }, [id, setPlaygroundId]);
 
+  // Synchronize the fetched template data into our local state when it loads initially
   useEffect(() => {
     if (templateData && !openFiles.length) {
       setTemplateData(templateData);
     }
   }, [templateData, setTemplateData, openFiles.length]);
 
+  // Find the currently active file from the list of open files
   const activeFile = openFiles.find((file) => file.id === activeFileId);
+  // Check if any open file has unsaved changes
   const hasUnsavedChanges = openFiles.some((file) => file.hasUnsavedChanges);
 
+  // Handler for when a user clicks a file in the sidebar file tree
   const handleFileSelect = (file: TemplateFile) => {
     console.log("HandlePath", file);
     openFile(file);
@@ -97,6 +108,7 @@ const Page = () => {
   return (
     <TooltipProvider>
       <>
+        {/* Sidebar Component: Displays the file explorer tree */}
         <TemplateFileTree
           data={templateData!}
           onFileSelect={handleFileSelect}
@@ -187,9 +199,11 @@ const Page = () => {
             </div>
           </header>
 
+          {/* Main Content Area */}
           <div className="h-[calc(100vh-4rem)]">
             {openFiles.length > 0 ? (
               <div className="h-full flex flex-col">
+                {/* Tabs for open files */}
                 <div className="border-b bg-muted/30">
                   <Tabs
                     value={activeFileId || ""}
@@ -239,8 +253,10 @@ const Page = () => {
                   </Tabs>
                 </div>
 
+                {/* Editor and Preview Layout */}
                 <div className="flex-1">
                   <ResizablePanelGroup className="h-full">
+                    {/* Code Editor Panel */}
                     <ResizablePanel defaultSize={isPreviewVisible ? 50 : 100}>
                       <PlaygroundEditor
                         activeFile={activeFile}
@@ -250,6 +266,8 @@ const Page = () => {
                         }
                       />
                     </ResizablePanel>
+
+                    {/* Placeholder for Preview Panel - can be added here if needed */}
                   </ResizablePanelGroup>
                 </div>
               </div>

@@ -11,6 +11,10 @@ interface OpenFile extends TemplateFile {
   originalContent: string;
 }
 
+/**
+ * Zustand store to manage the state of the file explorer globally.
+ * This includes managing open files, active file, editor content, and folder structure.
+ */
 interface FileExplorerState {
   playgroundId: string;
   templateData: TemplateFolder | null;
@@ -82,6 +86,7 @@ export const useFileExplorer = create<FileExplorerState>((set, get) => ({
   setOpenFiles: (files) => set({ openFiles: files }),
   setActiveFileId: (fileId) => set({ activeFileId: fileId }),
 
+  // Opens a file in the editor, optionally switching to it if it's already open
   openFile: (file) => {
     const fileId = generateFileId(file, get().templateData!);
     const { openFiles } = get();
@@ -107,6 +112,7 @@ export const useFileExplorer = create<FileExplorerState>((set, get) => ({
     }));
   },
 
+  // Closes an open file and determines which file should be active next
   closeFile: (fileId) => {
     const { openFiles, activeFileId } = get();
     const newFiles = openFiles.filter((f) => f.id !== fileId);
@@ -414,6 +420,7 @@ export const useFileExplorer = create<FileExplorerState>((set, get) => ({
     }
   },
 
+  // Updates the content of an open file (e.g. as the user types)
   updateFileContent: (fileId, content) => {
     set((state) => ({
       openFiles: state.openFiles.map((file) =>

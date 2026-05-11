@@ -1,5 +1,9 @@
 import { TemplateFile, TemplateFolder } from "./path-to-json";
 
+/**
+ * Recursively searches a folder structure to find the full path of a given file.
+ * Returns the path string (e.g., "src/components/Button.tsx") or null if not found.
+ */
 export function findFilePath(
   file: TemplateFile,
   folder: TemplateFolder,
@@ -24,6 +28,10 @@ export function findFilePath(
   return null;
 }
 
+/**
+ * Generates a unique string identifier for a file by combining its path,
+ * filename, and extension. This is used as a unique key for open files.
+ */
 export const generateFileId = (
   file: TemplateFile,
   rootFolder: TemplateFolder,

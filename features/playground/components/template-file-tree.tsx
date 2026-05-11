@@ -101,6 +101,10 @@ interface TemplateFileTreeProps {
   ) => void;
 }
 
+/**
+ * The main file explorer sidebar component. It renders the root folder
+ * and handles adding new files/folders at the root level.
+ */
 const TemplateFileTree = ({
   data,
   onFileSelect,
@@ -113,6 +117,7 @@ const TemplateFileTree = ({
   onRenameFile,
   onRenameFolder,
 }: TemplateFileTreeProps) => {
+  // Check if the provided data is a root folder
   const isRootFolder = data && typeof data === "object" && "folderName" in data;
   const [isNewFileDialogOpen, setIsNewFileDialogOpen] = React.useState(false);
   const [isNewFolderDialogOpen, setIsNewFolderDialogOpen] =
@@ -152,6 +157,7 @@ const TemplateFileTree = ({
 
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* If it's a folder, render its children. Otherwise, render the single item */}
               {isRootFolder ? (
                 (data as TemplateFolder).items.map((child, index) => (
                   <TemplateNode

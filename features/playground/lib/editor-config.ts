@@ -1,5 +1,9 @@
 import type { Monaco } from "@monaco-editor/react";
 
+/**
+ * Maps a file extension to the corresponding language string used by Monaco Editor
+ * for syntax highlighting.
+ */
 export const getEditorLanguage = (fileExtension: string): string => {
   const extension = fileExtension.toLowerCase();
   const languageMap: Record<string, string> = {
@@ -52,8 +56,12 @@ export const getEditorLanguage = (fileExtension: string): string => {
   return languageMap[extension] || "plaintext";
 };
 
+/**
+ * Configures the global Monaco Editor instance with custom themes and compiler options.
+ * This ensures the editor looks like a modern IDE and has proper TypeScript support.
+ */
 export const configureMonaco = (monaco: Monaco) => {
-  // Define a beautiful modern dark theme
+  // Define a beautiful modern dark theme with custom token colors
   monaco.editor.defineTheme("modern-dark", {
     base: "vs-dark",
     inherit: true,
@@ -266,6 +274,10 @@ export const configureMonaco = (monaco: Monaco) => {
   });
 };
 
+/**
+ * Default configuration options passed to the Monaco Editor instance
+ * to provide a good out-of-the-box user experience.
+ */
 export const defaultEditorOptions = {
   // Font settings
   fontSize: 14,
