@@ -103,6 +103,10 @@ interface TemplateNodeProps {
   ) => void;
 }
 
+/**
+ * A recursive component that renders either a file or a folder in the file tree.
+ * If it's a folder, it will recursively render its children using TemplateNode.
+ */
 const TemplateNode = ({
   item,
   onFileSelect,
@@ -116,6 +120,7 @@ const TemplateNode = ({
   onRenameFile,
   onRenameFolder,
 }: TemplateNodeProps) => {
+  // Determine if the current item is a folder by checking for the 'folderName' property
   const isValidItem = item && typeof item === "object";
   const isFolder = isValidItem && "folderName" in item;
   const [isNewFileDialogOpen, setIsNewFileDialogOpen] = React.useState(false);
@@ -127,6 +132,7 @@ const TemplateNode = ({
 
   if (!isValidItem) return null;
 
+  // Render logic for a single File
   if (!isFolder) {
     const file = item as TemplateFile;
     const fileName = `${file.filename}.${file.fileExtension}`;
@@ -136,6 +142,7 @@ const TemplateNode = ({
       selectedFile.filename === file.filename &&
       selectedFile.fileExtension === file.fileExtension;
 
+    // Handlers for File specific actions
     const handleRename = () => {
       setIsRenameDialogOpen(true);
     };
@@ -195,10 +202,12 @@ const TemplateNode = ({
       </SidebarMenuItem>
     );
   } else {
+    // Render logic for a Folder
     const folder = item as TemplateFolder;
     const folderName = folder.folderName;
     const currentPath = path ? `${path}/${folderName}` : folderName;
 
+    // Handlers for Folder specific actions (Adding files/folders inside, renaming, deleting)
     const handleAddFile = () => {
       setIsNewFileDialogOpen(true);
     };
@@ -302,6 +311,7 @@ const TemplateNode = ({
 
           <CollapsibleContent>
             <SidebarMenuSub>
+              {/* Recursively render all child items within this folder */}
               {folder.items.map((childItem, index) => (
                 <TemplateNode
                   key={index}
