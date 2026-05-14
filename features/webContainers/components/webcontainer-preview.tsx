@@ -5,6 +5,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { transformToWebContainerFormat } from "../hooks/transformer";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import TerminalComponent from "./terminal";
 import { WebContainer } from "@webcontainer/api";
 import { TemplateFolder } from "@/features/playground/types";
 
@@ -350,7 +351,15 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
             </div>
           </div>
 
-          {/* Terminal  will come here */}
+          {/* Terminal */}
+          <div className="flex-1 p-4">
+            <TerminalComponent
+              ref={terminalRef}
+              webContainerInstance={instance}
+              theme="dark"
+              className="h-full"
+            />
+          </div>
         </div>
       ) : (
         <div className="h-full flex flex-col">
@@ -363,7 +372,15 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
             />
           </div>
 
-          {/* Terminal at bottom when preview is ready  will come here*/}
+          {/* Terminal at bottom when preview is ready */}
+          <div className="h-64 border-t">
+            <TerminalComponent
+              ref={terminalRef}
+              webContainerInstance={instance}
+              theme="dark"
+              className="h-full"
+            />
+          </div>
         </div>
       )}
     </div>
