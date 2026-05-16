@@ -25,11 +25,11 @@ interface TerminalProps {
   webContainerInstance?: any;
 }
 
-// Define the methods that will be exposed through the ref
+// Define the methods that will be exposed through the ref for parent components to interact with the terminal
 export interface TerminalRef {
-  writeToTerminal: (data: string) => void;
-  clearTerminal: () => void;
-  focusTerminal: () => void;
+  writeToTerminal: (data: string) => void; // Write output directly to the terminal
+  clearTerminal: () => void; // Clear the terminal screen
+  focusTerminal: () => void; // Focus the terminal input
 }
 
 const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
@@ -102,11 +102,12 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
       },
     };
 
+    // Helper function to write the shell prompt
     const writePrompt = useCallback(() => {
       if (term.current) {
         term.current.write("\r\n$ ");
-        currentLine.current = "";
-        cursorPosition.current = 0;
+        currentLine.current = ""; // Reset current line buffer
+        cursorPosition.current = 0; // Reset cursor position
       }
     }, []);
 
@@ -127,18 +128,23 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
       },
     }));
 
+    /**
+     * CORE TERMINAL OPERATION FLOW - STEP 3: Execution
+     * Executes a command string either locally (built-ins) or via WebContainer spawn.
+     * This function is triggered when the user presses Enter in the terminal.
+     */
     const executeCommand = useCallback(
       async (command: string) => {
         if (!webContainerInstance || !term.current) return;
 
-        // Add to history
+        // Add to history if it's not empty and not the same as the last command
         if (
           command.trim() &&
           commandHistory.current[commandHistory.current.length - 1] !== command
         ) {
           commandHistory.current.push(command);
         }
-        historyIndex.current = -1;
+        historyIndex.current = -1; // Reset history index for up/down navigation
 
         try {
           // Handle built-in commands
@@ -166,7 +172,9 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
           const cmd = parts[0];
           const args = parts.slice(1);
 
-          // Execute in WebContainer
+          // CORE TERMINAL OPERATION FLOW - STEP 3a: Process Spawning
+          // Execute in WebContainer by spawning a new process.
+          // We pass the terminal dimensions to ensure proper output formatting.
           term.current.writeln("");
           const process = await webContainerInstance.spawn(cmd, args, {
             terminal: {
@@ -177,7 +185,9 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
 
           currentProcess.current = process;
 
-          // Handle process output
+          // CORE TERMINAL OPERATION FLOW - STEP 3b: Output Piping
+          // Pipe the output stream from the WebContainer process directly into the xterm.js instance.
+          // This takes chunks of data from the WebContainer and writes them to the UI terminal.
           process.output.pipeTo(
             new WritableStream({
               write(data) {
@@ -188,7 +198,8 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
             }),
           );
 
-          // Wait for process to complete
+          // CORE TERMINAL OPERATION FLOW - STEP 3c: Process Completion
+          // Wait for the spawned process to finish executing before showing the next prompt.
           const exitCode = await process.exit;
           currentProcess.current = null;
 
@@ -205,13 +216,19 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
       [webContainerInstance, writePrompt],
     );
 
+    /**
+     * CORE TERMINAL OPERATION FLOW - STEP 2: Input Handling
+     * Captures and handles keyboard input directed to the terminal.
+     * This builds up the command string character by character and handles special keys.
+     */
     const handleTerminalInput = useCallback(
       (data: string) => {
         if (!term.current) return;
 
         // Handle special characters
         switch (data) {
-          case "\r": // Enter
+          case "\r": // Enter key: execute the built-up command
+            // Triggers Step 3 of the flow
             executeCommand(currentLine.current);
             break;
 
@@ -227,7 +244,7 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
             }
             break;
 
-          case "\u0003": // Ctrl+C
+          case "\u0003": // Ctrl+C: kill the running process
             if (currentProcess.current) {
               currentProcess.current.kill();
               currentProcess.current = null;
@@ -295,6 +312,11 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
       [executeCommand, writePrompt],
     );
 
+    /**
+     * CORE TERMINAL OPERATION FLOW - STEP 1: Initialization
+     * Initializes the xterm.js terminal instance and attaches addons (fit, search, links).
+     * This sets up the UI component and binds the input handler (Step 2) to the terminal.
+     */
     const initializeTerminal = useCallback(() => {
       if (!terminalRef.current || term.current) return;
 
@@ -311,10 +333,10 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
         tabStopWidth: 4,
       });
 
-      // Add addons
-      const fitAddonInstance = new FitAddon();
-      const webLinksAddon = new WebLinksAddon();
-      const searchAddonInstance = new SearchAddon();
+      // Add addons for extended terminal capabilities
+      const fitAddonInstance = new FitAddon(); // Autoresizes terminal
+      const webLinksAddon = new WebLinksAddon(); // Makes URLs clickable
+      const searchAddonInstance = new SearchAddon(); // Allows text search
 
       terminal.loadAddon(fitAddonInstance);
       terminal.loadAddon(webLinksAddon);
@@ -326,7 +348,7 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
       searchAddon.current = searchAddonInstance;
       term.current = terminal;
 
-      // Handle terminal input
+      // Bind Step 2: Handle terminal input when the user types
       terminal.onData(handleTerminalInput);
 
       // Initial fit
@@ -342,6 +364,7 @@ const TerminalComponent = forwardRef<TerminalRef, TerminalProps>(
       return terminal;
     }, [theme, handleTerminalInput, writePrompt]);
 
+    // Bootstraps connection to WebContainer to notify user that the terminal is ready
     const connectToWebContainer = useCallback(async () => {
       if (!webContainerInstance || !term.current) return;
 

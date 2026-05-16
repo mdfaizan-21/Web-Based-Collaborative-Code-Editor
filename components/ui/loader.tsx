@@ -1,9 +1,10 @@
 import { Loader2 } from "lucide-react";
 
+// A UI component that displays a progress step with a loading spinner or checkmark
 interface LoadingStepProps {
-  currentStep: number;
-  step: number;
-  label: string;
+  currentStep: number; // The globally active step index
+  step: number; // The index of this specific step
+  label: string; // The descriptive text for this step
 }
 const LoadingStep: React.FC<LoadingStepProps> = ({
   currentStep,
