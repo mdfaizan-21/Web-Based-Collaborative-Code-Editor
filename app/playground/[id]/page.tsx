@@ -78,6 +78,7 @@ const Page = () => {
     setOpenFiles,
   } = useFileExplorer();
 
+  // Initialize the WebContainer environment with the provided template data
   const {
     serverUrl,
     isLoading: containerLoading,
@@ -324,6 +325,7 @@ const Page = () => {
                       <>
                         <ResizableHandle />
                         <ResizablePanel defaultSize={50}>
+                          {/* Renders the live preview and terminal panel for the WebContainer */}
                           <WebContainerPreview
                             templateData={templateData}
                             instance={instance}

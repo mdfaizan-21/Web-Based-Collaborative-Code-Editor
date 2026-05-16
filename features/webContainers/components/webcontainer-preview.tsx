@@ -64,7 +64,7 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
 
   useEffect(() => {
     async function setupContainer() {
-      // Don't run setup if it's already complete or in progress
+      // Don't run setup if it's already complete or in progress to avoid duplicate processes
       if (!instance || isSetupComplete || isSetupInProgress) return;
 
       try {
@@ -112,6 +112,7 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
         }
 
         // Step 1: Transform data
+        // Convert our application's file structure format into the format required by WebContainer
         setLoadingState((prev) => ({ ...prev, transforming: true }));
         setCurrentStep(1);
 
@@ -133,6 +134,7 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
         setCurrentStep(2);
 
         // Step 2: Mount files
+        // Write all the transformed files to the WebContainer's virtual file system
         if (terminalRef.current?.writeToTerminal) {
           terminalRef.current.writeToTerminal(
             "📁 Mounting files to WebContainer...\r\n",
@@ -155,6 +157,7 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
         setCurrentStep(3);
 
         // Step 3: Install dependencies
+        // Spawn the `npm install` process inside the container to resolve package dependencies
         if (terminalRef.current?.writeToTerminal) {
           terminalRef.current.writeToTerminal(
             "📦 Installing dependencies...\r\n",
@@ -197,6 +200,7 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
         setCurrentStep(4);
 
         // Step 4: Start the server
+        // Run the development server (e.g., `npm run start` or `npm run dev`)
         if (terminalRef.current?.writeToTerminal) {
           terminalRef.current.writeToTerminal(
             "🚀 Starting development server...\r\n",
