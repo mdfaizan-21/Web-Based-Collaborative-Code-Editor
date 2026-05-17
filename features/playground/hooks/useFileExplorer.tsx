@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 import { toast } from "sonner";
 import { TemplateFile, TemplateFolder } from "../types";
-import { generateFileId } from "../lib";
+import { generateFileId, findFilePath } from "../lib";
 
 interface OpenFile extends TemplateFile {
   id: string;
@@ -31,6 +31,15 @@ interface FileExplorerState {
   openFile: (file: TemplateFile) => void;
   closeFile: (fileId: string) => void;
   closeAllFiles: () => void;
+  saveFile: (
+    fileId: string,
+    writeFileSync: (filePath: string, content: string) => Promise<void>,
+    saveTemplateData: (data: TemplateFolder) => Promise<void>,
+  ) => Promise<void>;
+  saveAllFiles: (
+    writeFileSync: (filePath: string, content: string) => Promise<void>,
+    saveTemplateData: (data: TemplateFolder) => Promise<void>,
+  ) => Promise<void>;
   handleAddFile: (
     newFile: TemplateFile,
     parentPath: string,
@@ -133,12 +142,138 @@ export const useFileExplorer = create<FileExplorerState>((set, get) => ({
         newEditorContent = "";
       }
     }
-
     set({
       openFiles: newFiles,
       activeFileId: newActiveFileId,
       editorContent: newEditorContent,
     });
+  },
+
+  closeAllFiles: () => {
+    set({
+      openFiles: [],
+      activeFileId: null,
+      editorContent: "",
+    });
+  },
+
+  saveFile: async (fileId, writeFileSync, saveTemplateData) => {
+    const { openFiles, templateData } = get();
+    const file = openFiles.find((f) => f.id === fileId);
+    if (!file || !templateData) return;
+
+    try {
+      const filePath = findFilePath(file, templateData);
+      if (!filePath) throw new Error("File path not found in template data");
+
+      // 1. Write to WebContainer
+      await writeFileSync(filePath, file.content);
+
+      // 2. Update templateData
+      const updatedTemplateData = JSON.parse(
+        JSON.stringify(templateData),
+      ) as TemplateFolder;
+
+      const updateFileInFolder = (folder: TemplateFolder) => {
+        for (let i = 0; i < folder.items.length; i++) {
+          const item = folder.items[i];
+          if ("folderName" in item) {
+            updateFileInFolder(item as TemplateFolder);
+          } else if (
+            "filename" in item &&
+            item.filename === file.filename &&
+            item.fileExtension === file.fileExtension
+          ) {
+            item.content = file.content;
+          }
+        }
+      };
+
+      updateFileInFolder(updatedTemplateData);
+
+      // 3. Save to backend
+      await saveTemplateData(updatedTemplateData);
+
+      // 4. Update state
+      const updatedOpenFiles = [...openFiles];
+      const index = updatedOpenFiles.findIndex((f) => f.id === fileId);
+      if (index !== -1) {
+        updatedOpenFiles[index] = {
+          ...file,
+          hasUnsavedChanges: false,
+          originalContent: file.content,
+        };
+      }
+
+      set({
+        templateData: updatedTemplateData,
+        openFiles: updatedOpenFiles,
+      });
+
+      toast.success(`Saved file: ${file.filename}.${file.fileExtension}`);
+    } catch (error) {
+      console.error("Error saving file:", error);
+      toast.error("Failed to save file");
+    }
+  },
+
+  saveAllFiles: async (writeFileSync, saveTemplateData) => {
+    const { openFiles, templateData } = get();
+    const unsavedFiles = openFiles.filter((f) => f.hasUnsavedChanges);
+
+    if (unsavedFiles.length === 0 || !templateData) return;
+
+    try {
+      const updatedTemplateData = JSON.parse(
+        JSON.stringify(templateData),
+      ) as TemplateFolder;
+
+      for (const file of unsavedFiles) {
+        const filePath = findFilePath(file, templateData);
+        if (filePath) {
+          // 1. Write to WebContainer
+          await writeFileSync(filePath, file.content);
+
+          // 2. Update templateData
+          const updateFileInFolder = (folder: TemplateFolder) => {
+            for (let i = 0; i < folder.items.length; i++) {
+              const item = folder.items[i];
+              if ("folderName" in item) {
+                updateFileInFolder(item as TemplateFolder);
+              } else if (
+                "filename" in item &&
+                item.filename === file.filename &&
+                item.fileExtension === file.fileExtension
+              ) {
+                item.content = file.content;
+              }
+            }
+          };
+
+          updateFileInFolder(updatedTemplateData);
+        }
+      }
+
+      // 3. Save to backend
+      await saveTemplateData(updatedTemplateData);
+
+      // 4. Update state
+      const updatedOpenFiles = openFiles.map((file) => ({
+        ...file,
+        hasUnsavedChanges: false,
+        originalContent: file.content,
+      }));
+
+      set({
+        templateData: updatedTemplateData,
+        openFiles: updatedOpenFiles,
+      });
+
+      toast.success(`Saved ${unsavedFiles.length} file(s)`);
+    } catch (error) {
+      console.error("Error saving all files:", error);
+      toast.error("Failed to save all files");
+    }
   },
 
   handleAddFolder: async (

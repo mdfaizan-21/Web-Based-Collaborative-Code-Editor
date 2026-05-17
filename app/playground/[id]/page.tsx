@@ -56,6 +56,7 @@ import LoadingStep from "@/components/ui/loader";
 const Page = () => {
   const { id } = useParams<{ id: string }>();
   const [isPreviewVisible, setIsPreviewVisible] = useState(true);
+  const [fileSaveTrigger, setFileSaveTrigger] = useState(0);
   const { playgroundData, templateData, isLoading, error, saveTemplateData } =
     usePlayground(id);
   const {
@@ -63,6 +64,8 @@ const Page = () => {
     closeAllFiles,
     openFile,
     closeFile,
+    saveFile,
+    saveAllFiles,
     editorContent,
     updateFileContent,
     handleAddFile,
@@ -106,6 +109,32 @@ const Page = () => {
     console.log("HandlePath", file);
     openFile(file);
   };
+
+  const handleSave = async (fileId: string) => {
+    await saveFile(fileId, writeFileSync, saveTemplateData);
+    setFileSaveTrigger((prev) => prev + 1);
+  };
+
+  const handleSaveAll = async () => {
+    await saveAllFiles(writeFileSync, saveTemplateData);
+    setFileSaveTrigger((prev) => prev + 1);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleSaveAll();
+        } else if (activeFileId) {
+          handleSave(activeFileId);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeFileId, saveFile, saveAllFiles, writeFileSync, saveTemplateData]);
 
   if (error) {
     return (
@@ -193,7 +222,11 @@ const Page = () => {
                     <Button
                       size={"sm"}
                       variant={"outline"}
-                      onClick={() => {}}
+                      onClick={() => {
+                        if (activeFileId) {
+                          handleSave(activeFileId);
+                        }
+                      }}
                       disabled={!activeFile || !activeFile.hasUnsavedChanges}
                     >
                       <Save className="size-4" />
@@ -208,7 +241,7 @@ const Page = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => {}}
+                      onClick={() => handleSaveAll()}
                       disabled={!hasUnsavedChanges}
                     >
                       <Save className="h-4 w-4" /> All
@@ -334,6 +367,7 @@ const Page = () => {
                             error={containerError}
                             serverUrl={serverUrl!}
                             forceResetup={false}
+                            fileSaveTrigger={fileSaveTrigger}
                           />
                         </ResizablePanel>
                       </>
