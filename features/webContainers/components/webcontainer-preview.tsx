@@ -17,6 +17,7 @@ interface WebContainerPreviewProps {
   instance: WebContainer | null;
   writeFileSync: (path: string, content: string) => Promise<void>;
   forceResetup?: boolean; // Optional prop to force re-setup
+  fileSaveTrigger?: number;
 }
 
 const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
@@ -27,6 +28,7 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
   serverUrl,
   writeFileSync,
   forceResetup = false,
+  fileSaveTrigger = 0,
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [loadingState, setLoadingState] = useState({
@@ -44,6 +46,9 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
 
   // Ref to access terminal methods
   const terminalRef = useRef<any>(null);
+  
+  // Track the running server process so we can kill and restart it
+  const startProcessRef = useRef<any>(null);
 
   // Reset setup state when forceResetup changes
   useEffect(() => {
@@ -204,6 +209,7 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
         }
 
         const startProcess = await instance.spawn("npm", ["run", "start"]);
+        startProcessRef.current = startProcess;
 
         // Listen for server ready event
         instance.on("server-ready", (port: number, url: string) => {
@@ -263,6 +269,44 @@ const WebContainerPreview: React.FC<WebContainerPreviewProps> = ({
       // The WebContainer should persist across component re-mounts
     };
   }, []);
+
+  // Restart server when files are saved
+  useEffect(() => {
+    async function restartServer() {
+      if (!instance || !fileSaveTrigger) return;
+
+      if (terminalRef.current?.writeToTerminal) {
+        terminalRef.current.writeToTerminal(
+          "\r\n🔄 File change detected. Restarting server...\r\n",
+        );
+      }
+
+      // Kill existing process
+      if (startProcessRef.current) {
+        startProcessRef.current.kill();
+        startProcessRef.current = null;
+      }
+
+      try {
+        const startProcess = await instance.spawn("npm", ["run", "start"]);
+        startProcessRef.current = startProcess;
+
+        startProcess.output.pipeTo(
+          new WritableStream({
+            write(data) {
+              if (terminalRef.current?.writeToTerminal) {
+                terminalRef.current.writeToTerminal(data);
+              }
+            },
+          }),
+        );
+      } catch (err) {
+        console.error("Error restarting server:", err);
+      }
+    }
+
+    restartServer();
+  }, [fileSaveTrigger, instance]);
 
   if (isLoading) {
     return (
